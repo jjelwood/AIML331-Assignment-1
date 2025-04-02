@@ -50,7 +50,7 @@ def convolution(image, kernel):
 
     return output
 
-def box_filter(image, kernel_size):
+def box_filter(kernel_size):
     return np.ones((kernel_size, kernel_size), dtype=float) / (kernel_size ** 2)
 
 def plt_histograms(name, image):
@@ -112,7 +112,7 @@ def histogram_equalization(image):
 
     return equalized_image
 
-filter_kernel = box_filter(image, 30)
+filter_kernel = box_filter(30)
 
 plt_histograms("Base Image", image)
 plt_histograms("30 x 30 Box Blur", convolution(image, filter_kernel))
