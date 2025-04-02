@@ -19,10 +19,13 @@ assert image.shape[0] == image.shape[1], "Image must be square"
 assert np.all(0 <= image) and np.all(image <= 255), "Image must be in [0,255] range"
 
 def get_counts(image):
+    # Convert image to integers
     image = np.round(image).astype(int)
-    counts = np.zeros((np.max(image)+1,), dtype=int)
+    counts = np.zeros((256,), dtype=int)
+
     for i in range(len(counts)):
         counts[i] = np.sum(image == i)
+    
     return counts
 
 def show_image(image):
@@ -31,15 +34,19 @@ def show_image(image):
 def cumulative_dist(image):
     counts = get_counts(image)
     cumulative_histogram = np.zeros((len(counts),), dtype=float)
+
     cumulative_histogram[0] = counts[0]
     for i in range(1, len(counts)):
         cumulative_histogram[i] = cumulative_histogram[i - 1] + counts[i]
     return cumulative_histogram / np.sum(counts)
 
+
 def convolution(image, kernel):
-    kernel = kernel[::-1, ::-1] # flip the kernel
+    # Flip the kernel
+    kernel = kernel[::-1, ::-1]
     kernel_size = kernel.shape[0]
     pad_width = math.ceil(kernel_size / 2)
+    # Pad the image on all sides
     padded_image = np.pad(image, pad_width)
     output = np.zeros_like(image)
 
@@ -100,14 +107,24 @@ def fft_convolution(image, kernel):
     image_size = image.shape[0]
     image_pad = kernel_size // 2
     pad_width = image_size - kernel_size
+
+    # Pad the kernel and image to the same size
     padded_kernel = np.pad(kernel, ((pad_width + image_pad, 0), (pad_width + image_pad, 0)))
     padded_image = np.pad(image, ((image_pad, 0), (image_pad, 0)))
+
+    # Apply FFT to the kernel and image
     kernel_fft = np.fft.fft2(padded_kernel)
     image_fft = np.fft.fft2(padded_image)
-    return np.fft.ifft2(image_fft * kernel_fft).real[image_pad:image_size-image_pad, image_pad:image_size-image_pad]
+
+    # Perform the convolution in the frequency domain
+    conv = np.fft.ifft2(image_fft * kernel_fft)
+
+    # Get the real part of the result and crop the padded area
+    return conv.real[image_pad:image_size-image_pad, image_pad:image_size-image_pad]
 
 def histogram_equalization(image):
     cumulative_histogram = cumulative_dist(image)
+    # Set each pixel value to its corresponding cumulative histogram value * 255
     equalized_image = np.vectorize(lambda j: 255 * cumulative_histogram[int(j)])(image)
 
     return equalized_image
